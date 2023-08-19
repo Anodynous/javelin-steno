@@ -121,6 +121,7 @@ const uint16_t StenoKeyCodeEmitter::EmitterContext::KP_ALT_HEX_KEY_CODES[] = {
 // clang-format off
 // spellchecker: disable
 #define LS MODIFIER_L_SHIFT_FLAG
+#define RA MODIFIER_R_ALT_FLAG
 #define BS BACKSPACE
 #define APOS APOSTROPHE
 #define SCN SEMICOLON
@@ -135,29 +136,29 @@ const uint16_t StenoKeyCodeEmitter::EmitterContext::ASCII_KEY_CODES[] = {
   0,           0,            0,              KeyCode::ESC, 0,     0,     0,     0,
 
   //              !               "               #               $               %               &               '
-  KeyCode::SPACE, LS|KeyCode::_1, LS|KeyCode::APOS,LS|KeyCode::_3,   LS|KeyCode::_4,   LS|KeyCode::_5,   LS|KeyCode::_7,   KeyCode::APOSTROPHE,
+  KeyCode::SPACE, LS|KeyCode::_1, LS|KeyCode::_2,LS|KeyCode::_3,   RA|KeyCode::_4,   LS|KeyCode::_5,   LS|KeyCode::_6,   KeyCode::BACKSLASH,
   // (            )               *               +               ,               -               .               /
-  LS|KeyCode::_9, LS|KeyCode::_0, LS|KeyCode::_8, LS|KeyCode::EQUAL, KeyCode::COMMA,  KeyCode::MINUS,  KeyCode::DOT,   KeyCode::SLASH,
+  LS|KeyCode::_8, LS|KeyCode::_9, LS|KeyCode::BACKSLASH, KeyCode::MINUS, KeyCode::COMMA,  KeyCode::SLASH,  KeyCode::DOT,   LS|KeyCode::_7,
   // 0            1               2               3               4               5               6               7
   KeyCode::_0,    KeyCode::_1,    KeyCode::_2,    KeyCode::_3,     KeyCode::_4,     KeyCode::_5,     KeyCode::_6,     KeyCode::_7,
   // 8            9               :               ;               <               =               >               ?
-  KeyCode::_8,    KeyCode::_9,    LS|KeyCode::SCN,KeyCode::SCN,   LS|KeyCode::COMMA,KeyCode::EQUAL,   LS|KeyCode::DOT, LS|KeyCode::SLASH,
+  KeyCode::_8,    KeyCode::_9,    LS|KeyCode::DOT,LS|KeyCode::COMMA,LS|KeyCode::COMMA,LS|KeyCode::_0, LS|KeyCode::DOT, LS|KeyCode::MINUS,
   // @            A               B               C               D               E               F               G
-  LS|KeyCode::_2, LS|KeyCode::A,  LS|KeyCode::B,  LS|KeyCode::C,  LS|KeyCode::D,   LS|KeyCode::E,   LS|KeyCode::F,   LS|KeyCode::G,
+  RA|KeyCode::_2, LS|KeyCode::A,  LS|KeyCode::B,  LS|KeyCode::C,  LS|KeyCode::D,   LS|KeyCode::E,   LS|KeyCode::F,   LS|KeyCode::G,
   // H            I               J               K               L               M               N               O
   LS|KeyCode::H,  LS|KeyCode::I,  LS|KeyCode::J,  LS|KeyCode::K,  LS|KeyCode::L,   LS|KeyCode::M,   LS|KeyCode::N,   LS|KeyCode::O,
   // P            Q               R               S               T               U               V               W
   LS|KeyCode::P,  LS|KeyCode::Q,  LS|KeyCode::R,  LS|KeyCode::S,  LS|KeyCode::T,   LS|KeyCode::U,   LS|KeyCode::V,   LS|KeyCode::W,
   // X            Y               Z               [               \               ]               ^               _
-  LS|KeyCode::X,  LS|KeyCode::Y,  LS|KeyCode::Z,  KeyCode::L_BRACKET,  KeyCode::BACKSLASH,  KeyCode::R_BRACKET,  LS|KeyCode::_6,   LS|KeyCode::MINUS,
+  LS|KeyCode::X,  LS|KeyCode::Y,  LS|KeyCode::Z,  RA|KeyCode::_8,  RA|KeyCode::MINUS,  RA|KeyCode::_9,  LS|KeyCode::R_BRACKET,   LS|KeyCode::SLASH,
   // `            a               b               c               d               e               f               g
-  KeyCode::GRAVE, KeyCode::A,     KeyCode::B,     KeyCode::C,     KeyCode::D,     KeyCode::E,     KeyCode::F,     KeyCode::G,
+  LS|KeyCode::EQUAL, KeyCode::A,     KeyCode::B,     KeyCode::C,     KeyCode::D,     KeyCode::E,     KeyCode::F,     KeyCode::G,
   // h            i               j               k               l               m               n               o
   KeyCode::H,     KeyCode::I,     KeyCode::J,     KeyCode::K,     KeyCode::L,     KeyCode::M,     KeyCode::N,     KeyCode::O,
   // p            q               r               s               t               u               v               w
   KeyCode::P,     KeyCode::Q,     KeyCode::R,     KeyCode::S,     KeyCode::T,     KeyCode::U,     KeyCode::V,     KeyCode::W,
   // x            y               z               {               |               }               ~               DEL
-  KeyCode::X,     KeyCode::Y,     KeyCode::Z,     LS|KeyCode::L_BRACKET,LS|KeyCode::BACKSLASH,LS|KeyCode::R_BRACKET,LS|KeyCode::GRAVE, 0,
+  KeyCode::X,     KeyCode::Y,     KeyCode::Z,     RA|KeyCode::_7,LS|KeyCode::BACKSLASH,RA|KeyCode::_0,RA|KeyCode::R_BRACKET, 0,
 };
 #undef S
 // spellchecker: enable
