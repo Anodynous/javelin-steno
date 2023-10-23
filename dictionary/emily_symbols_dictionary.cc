@@ -265,8 +265,9 @@ const char *StenoEmilySymbolsDictionary::GetName() const {
   return "emily-symbols";
 }
 
-bool StenoEmilySymbolsDictionary::PrintDictionary(bool hasData) const {
-  char strokeBuffer[32];
+bool StenoEmilySymbolsDictionary::PrintDictionary(const char *name,
+                                                  bool hasData) const {
+  char strokeBuffer[StenoStroke::MAX_STRING_LENGTH];
   char translationBuffer[32];
   for (size_t i = 0; i < sizeof(DATA) / sizeof(*DATA); ++i) {
     StenoStroke stroke = ACTIVATION_MATCH | DATA[i].trigger;

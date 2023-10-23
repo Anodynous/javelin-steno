@@ -28,15 +28,13 @@ public:
   }
 
   virtual void ReverseLookup(StenoReverseDictionaryLookup &result) const;
-  virtual bool
-  ReverseMapDictionaryLookup(StenoReverseMapDictionaryLookup &lookup) const;
 
   virtual void CacheMaximumOutlineLength();
   virtual size_t GetMaximumOutlineLength() const;
   virtual const char *GetName() const = 0;
 
   virtual void PrintInfo(int depth) const;
-  virtual bool PrintDictionary(bool hasData) const;
+  virtual bool PrintDictionary(const char *name, bool hasData) const;
 
   virtual void ListDictionaries() const;
   virtual bool EnableDictionary(const char *name);

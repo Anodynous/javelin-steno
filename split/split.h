@@ -19,6 +19,10 @@ enum class SplitHandlerId {
   DISPLAY_CONTROL,
   USB_STATUS,
   PAIR_CONSOLE,
+#if JAVELIN_U2F
+  U2F,
+  U2F_SCRIPT,
+#endif
 
   COUNT,
 };

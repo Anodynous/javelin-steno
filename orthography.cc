@@ -5,7 +5,6 @@
 #include "crc.h"
 #include "str.h"
 #include "word_list.h"
-#include <new>
 
 //---------------------------------------------------------------------------
 
@@ -25,9 +24,9 @@ StenoCompiledOrthography::CacheEntry::CacheEntry(const char *word,
 }
 
 StenoCompiledOrthography::CacheEntry::~CacheEntry() {
-  free((void *)word);
-  free((void *)suffix);
-  free((void *)result);
+  free(word);
+  free(suffix);
+  free(result);
 }
 
 bool StenoCompiledOrthography::CacheEntry::IsEqual(const char *word,
@@ -51,12 +50,13 @@ char *StenoCompiledOrthography::CacheBlock::Lookup(const char *word,
   return nullptr;
 }
 
-void StenoCompiledOrthography::CacheBlock::AddEntry(const CacheEntry *entry) {
-  size_t entryIndex = index++ & (CACHE_ASSOCIATIVITY - 1);
-
+void StenoCompiledOrthography::CacheBlock::AddEntry(CacheEntry *entry) {
   LockCache();
-  CacheEntry *oldEntry = (CacheEntry *)entries[entryIndex];
+
+  size_t entryIndex = index++ & (CACHE_ASSOCIATIVITY - 1);
+  CacheEntry *oldEntry = entries[entryIndex];
   entries[entryIndex] = entry;
+
   UnlockCache();
 
   delete oldEntry;
@@ -181,7 +181,7 @@ char *StenoCompiledOrthography::AddSuffix(const char *word,
   }
 
   char *result = AddSuffixInternal(word, suffix);
-  CacheEntry *entry = new (std::nothrow) CacheEntry(word, suffix, result);
+  CacheEntry *entry = new CacheEntry(word, suffix, result);
   cache[blockIndex].AddEntry(entry);
   return result;
 }

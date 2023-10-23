@@ -74,7 +74,7 @@ public:
   static void WriteAsJson(const char *data, char *buffer);
   static void WriteAsJson(const char *data);
 
-  static void WriteButtonScriptEvent(const char *text);
+  static void WriteScriptEvent(const char *text);
 
 #ifdef NDEBUG
   template <typename T, typename... T2>
@@ -90,6 +90,7 @@ public:
       __attribute__((format(printf, 1, 2)));
 #endif
 
+  static void Dump(const void *data, size_t length);
   static void Flush();
 
 #if RUN_TESTS

@@ -209,16 +209,21 @@ const StenoDictionary *StenoCompactMapDictionary::GetLookupProvider(
   }
 }
 
-bool StenoCompactMapDictionary::ReverseMapDictionaryLookup(
-    StenoReverseMapDictionaryLookup &lookup) const {
-  const void *data = lookup.data;
+void StenoCompactMapDictionary::ReverseLookup(
+    StenoReverseDictionaryLookup &result) const {
+  for (size_t i = 0; i < result.mapDataLookupCount; ++i) {
+    ReverseLookup(result, result.mapDataLookup[i]);
+  }
+}
 
+void StenoCompactMapDictionary::ReverseLookup(
+    StenoReverseDictionaryLookup &result, const void *data) const {
   // Quick reject
   if (data < strokes[1].data) {
-    return false;
+    return;
   }
   if (data >= strokes[cachedMaximumOutlineLength].offsets) {
-    return false;
+    return;
   }
 
   for (size_t i = 1; i <= cachedMaximumOutlineLength; ++i) {
@@ -231,13 +236,13 @@ bool StenoCompactMapDictionary::ReverseMapDictionaryLookup(
     // There is a match! Convert it to StenoStrokes.
     const CompactStenoMapDictionaryDataEntry *entry =
         (const CompactStenoMapDictionaryDataEntry *)data;
+
+    StenoStroke strokes[i];
     size_t strokeLength = i;
-    entry->ExpandTo(lookup.strokes, strokeLength);
-    lookup.length = strokeLength;
-    lookup.provider = this;
-    return true;
+    entry->ExpandTo(strokes, strokeLength);
+    result.AddResult(strokes, strokeLength, this);
+    return;
   }
-  return false;
 }
 
 const char *StenoCompactMapDictionary::GetName() const {
@@ -256,7 +261,8 @@ void StenoCompactMapDictionary::PrintInfo(int depth) const {
   Console::Printf("%s%s: %zu bytes\n", Spaces(depth), GetName(), end - start);
 }
 
-bool StenoCompactMapDictionary::PrintDictionary(bool hasData) const {
+bool StenoCompactMapDictionary::PrintDictionary(const char *name,
+                                                bool hasData) const {
   char *buffer = (char *)malloc(2048);
   for (size_t i = 1; i <= cachedMaximumOutlineLength; ++i) {
     if (strokes[i].PrintCompactDictionary(hasData, i, buffer, textBlock)) {

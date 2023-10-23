@@ -84,10 +84,10 @@ public:
   bool IsEmpty() const { return keyState == 0; }
   bool IsNotEmpty() const { return keyState != 0; }
 
-  // Buffer must be at least 26 characters wide.
+  // Buffer must be at least MAX_STRING_LENGTH characters wide.
   char *ToString(char *buffer) const;
 
-  // Buffer must be at least 26 characters wide.
+  // Buffer must be at least MAX_STRING_LENGTH characters wide.
   char *ToWideString(char *buffer) const;
 
   bool operator==(const StenoStroke &o) const { return keyState == o.keyState; }
@@ -118,8 +118,10 @@ public:
 
   static uint32_t PopCount(const StenoStroke *strokes, size_t length);
   static uint32_t Hash(const StenoStroke *strokes, size_t length);
-  static char *ToString(const StenoStroke *strokes, size_t length,
-                        char *buffer);
+  static char *ToString(char *buffer, const StenoStroke *strokes,
+                        size_t length);
+
+  static const size_t MAX_STRING_LENGTH = 32;
 
 private:
   uint32_t keyState;

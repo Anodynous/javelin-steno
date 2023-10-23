@@ -22,6 +22,8 @@ enum class ScriptId {
   KEYBOARD_LED_STATUS_UPDATE,
   BLE_ADVERTISING_UPDATE,
   BLE_SCANNING_UPDATE,
+  U2F_STATUS_UPDATE,
+  U2F_WINK,
 
   COUNT,
 };
@@ -54,12 +56,19 @@ public:
   bool IsTickScriptEmpty() const { return IsScriptIndexEmpty(1); }
   bool IsScriptIndexEmpty(size_t index) const;
 
+  static bool IsWaitingForUserPresence();
+  static void ReplyUserPresence(bool present);
+
+  void EnableScriptEvents() { scriptEventsEnabled = true; }
+  void DisableScriptEvents() { scriptEventsEnabled = false; }
+
 private:
   struct ScriptTimerContext;
 
   static const size_t MAX_STACK_SIZE = 256;
 
   bool cancelStenoState = false;
+  bool scriptEventsEnabled = false;
   int inPressAllCount = 0;
   uint32_t scriptTime;
   const uint8_t *byteCode;

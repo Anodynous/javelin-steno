@@ -12,6 +12,7 @@
 #include "hal/usb_status.h"
 #include "key.h"
 #include "keyboard_led_status.h"
+#include "malloc_allocate.h"
 #include "random.h"
 #include "script_byte_code.h"
 #include "split/split_usb_status.h"
@@ -156,7 +157,7 @@ void Script::PrintInfo() const {
 
 //---------------------------------------------------------------------------
 
-struct Script::ScriptTimerContext {
+struct Script::ScriptTimerContext : public JavelinMallocAllocate {
   Script *script;
   size_t offset;
 
@@ -182,6 +183,7 @@ void Script::StopTimer(intptr_t timerId) {
                                                              scriptTime);
   delete oldContext;
 }
+
 void Script::StartTimer(intptr_t timerId, uint32_t interval, bool isRepeating,
                         size_t offset) {
   ScriptTimerContext *context = new ScriptTimerContext;
@@ -694,8 +696,10 @@ void Script::ExecutionContext::Run(Script &script, size_t offset) {
         continue;
       case SF::SEND_EVENT: {
         intptr_t offset = script.Pop();
-        const char *text = (const char *)script.byteCode + offset;
-        Console::WriteButtonScriptEvent(text);
+        if (script.scriptEventsEnabled) {
+          const char *text = (const char *)script.byteCode + offset;
+          Console::WriteScriptEvent(text);
+        }
         continue;
       }
       case SF::IS_PAIR_POWERED:
@@ -758,6 +762,23 @@ void Script::ExecutionContext::Run(Script &script, size_t offset) {
       case SF::IS_BLE_SCANNING:
         script.Push(Ble::IsScanning());
         continue;
+      case SF::IS_WAITING_FOR_USER_PRESENCE:
+        script.Push(IsWaitingForUserPresence());
+        continue;
+      case SF::REPLY_USER_PRESENCE:
+        script.ReplyUserPresence(script.Pop() != 0);
+        continue;
+      case SF::SET_GPIO_INPUT_PIN: {
+        int pull = script.Pop();
+        int pin = script.Pop();
+        Gpio::SetInputPin(pin, (Gpio::Pull)pull);
+        continue;
+      }
+      case SF::READ_GPIO_PIN: {
+        int pin = script.Pop();
+        script.Push(Gpio::GetPin(pin));
+        continue;
+      }
       }
       continue;
     }
@@ -866,6 +887,8 @@ void Script::RunGetParameterCommand(const char *parameter) {
 //---------------------------------------------------------------------------
 
 __attribute__((weak)) void Script::SetInputHint(int hint) {}
+__attribute__((weak)) bool Script::IsWaitingForUserPresence() { return false; }
+__attribute__((weak)) void Script::ReplyUserPresence(bool present) {}
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------

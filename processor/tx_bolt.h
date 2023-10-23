@@ -1,20 +1,16 @@
 //---------------------------------------------------------------------------
 
-#pragma once
+#include "processor.h"
 
 //---------------------------------------------------------------------------
 
-class Gpio {
+class StenoTxBolt final : public StenoProcessorElement {
 public:
-  enum Pull {
-    NONE,
-    DOWN,
-    UP,
-  };
+  void Process(const StenoKeyState &value, StenoAction action);
+  void PrintInfo() const;
 
-  static void SetInputPin(int pin, Pull pull);
-  static bool GetPin(int pin);
-  static void SetPin(int pin, bool value);
+private:
+  size_t counter = 0;
 };
 
 //---------------------------------------------------------------------------

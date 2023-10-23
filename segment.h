@@ -3,6 +3,7 @@
 #pragma once
 #include "dictionary/dictionary.h"
 #include "list.h"
+#include "malloc_allocate.h"
 #include "state.h"
 
 //---------------------------------------------------------------------------
@@ -24,6 +25,7 @@ struct StenoSegment {
 
   bool IsValid() const { return strokeLength != 0; }
   bool HasCommand() const;
+  const StenoState *GetEndStenoState() const { return state + strokeLength; }
 
   static StenoSegment CreateInvalid() { return StenoSegment(); }
 
@@ -43,7 +45,7 @@ struct StenoToken {
   const StenoState *state;
 };
 
-class StenoTokenizer {
+class StenoTokenizer : public JavelinMallocAllocate {
 public:
   virtual ~StenoTokenizer() {}
 
