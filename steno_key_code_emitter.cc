@@ -171,7 +171,8 @@ bool StenoKeyCodeEmitter::Process(const StenoKeyCode *previous,
                                   const StenoKeyCode *value,
                                   size_t valueLength) const {
   // Skip common prefixes.
-  while (previousLength > 0 && valueLength > 0 && *previous == *value) {
+  while (previousLength > 0 && valueLength > 0 &&
+         previous->HasSameOutput(*value)) {
     --previousLength;
     --valueLength;
     ++previous;
@@ -441,7 +442,7 @@ void StenoKeyCodeEmitter::EmitterContext::ReleaseModifiers(uint32_t modifiers) {
 TEST_BEGIN("StenoKeyCodeEmitter: Basic tests") {
   StenoKeyCodeEmitter emitter;
 
-  StenoKeyCode codes[] = {
+  const StenoKeyCode codes[] = {
       StenoKeyCode('c', StenoCaseMode::TITLE),
       StenoKeyCode('a', StenoCaseMode::NORMAL),
       StenoKeyCode('t', StenoCaseMode::NORMAL),
@@ -462,12 +463,12 @@ TEST_END
 TEST_BEGIN("StenoKeyCodeEmitter: Backspace tests") {
   StenoKeyCodeEmitter emitter;
 
-  StenoKeyCode previous[] = {
+  const StenoKeyCode previous[] = {
       StenoKeyCode('c', StenoCaseMode::TITLE),
       StenoKeyCode('o', StenoCaseMode::NORMAL),
       StenoKeyCode('g', StenoCaseMode::NORMAL),
   };
-  StenoKeyCode codes[] = {
+  const StenoKeyCode codes[] = {
       StenoKeyCode('c', StenoCaseMode::TITLE),
       StenoKeyCode('a', StenoCaseMode::NORMAL),
       StenoKeyCode('t', StenoCaseMode::NORMAL),
@@ -487,7 +488,7 @@ TEST_END
 TEST_BEGIN("StenoKeyCodeEmitter: Shared modifier tests") {
   StenoKeyCodeEmitter emitter;
 
-  StenoKeyCode codes[] = {
+  const StenoKeyCode codes[] = {
       StenoKeyCode('c', StenoCaseMode::UPPER),
       StenoKeyCode('a', StenoCaseMode::UPPER),
       StenoKeyCode('t', StenoCaseMode::UPPER),
@@ -509,7 +510,7 @@ TEST_BEGIN("StenoKeyCodeEmitter: MacOS Unicode Hex test") {
   StenoKeyCodeEmitter emitter;
   emitter.SetUnicodeMode(UnicodeMode::MACOS_UNICODE_HEX);
 
-  StenoKeyCode codes[] = {
+  const StenoKeyCode codes[] = {
       StenoKeyCode(0x4f60, StenoCaseMode::NORMAL),  // '你'
       StenoKeyCode(0x597d, StenoCaseMode::NORMAL),  // '好'
       StenoKeyCode(0x1f600, StenoCaseMode::NORMAL), // '😀'
@@ -595,7 +596,7 @@ TEST_BEGIN("StenoKeyCodeEmitter: Windows Hex test") {
   StenoKeyCodeEmitter emitter;
   emitter.SetUnicodeMode(UnicodeMode::WINDOWS_HEX);
 
-  StenoKeyCode codes[] = {
+  const StenoKeyCode codes[] = {
       StenoKeyCode('a', StenoCaseMode::NORMAL),
       StenoKeyCode(u'Ä', StenoCaseMode::NORMAL), // Alt code 142
       StenoKeyCode(u'É', StenoCaseMode::NORMAL), // Alt code 144
@@ -636,7 +637,7 @@ TEST_BEGIN("StenoKeyCodeEmitter: MacOS US Unicode test") {
   StenoKeyCodeEmitter emitter;
   emitter.SetUnicodeMode(UnicodeMode::MACOS_US);
 
-  StenoKeyCode codes[] = {
+  const StenoKeyCode codes[] = {
       StenoKeyCode(0x00c4, StenoCaseMode::NORMAL), // 'Ä'
       StenoKeyCode(0x2013, StenoCaseMode::NORMAL), // endash
   };
