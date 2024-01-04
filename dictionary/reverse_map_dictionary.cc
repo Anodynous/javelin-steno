@@ -2,8 +2,17 @@
 
 #include "reverse_map_dictionary.h"
 #include "../str.h"
+#include "map_data_lookup.h"
 
 //---------------------------------------------------------------------------
+
+StenoReverseMapDictionary::StenoReverseMapDictionary(
+    StenoDictionary *dictionary, const uint8_t *baseAddress,
+    const uint8_t *textBlock, size_t textBlockLength)
+    : StenoWrappedDictionary(dictionary), baseAddress(baseAddress),
+      textBlock(textBlock), textBlockLength(textBlockLength) {
+  BuildIndex();
+}
 
 void StenoReverseMapDictionary::ReverseLookup(
     StenoReverseDictionaryLookup &result) const {
@@ -15,8 +24,21 @@ void StenoReverseMapDictionary::ReverseLookup(
 
 void StenoReverseMapDictionary::AddMapDictionaryData(
     StenoReverseDictionaryLookup &result) const {
-  const uint8_t *left = textBlock + 1;
-  const uint8_t *right = textBlock + textBlockLength;
+
+  size_t indexLeft = 0;
+  size_t indexRight = indexSize;
+  while (indexLeft + 1 < indexRight) {
+    size_t mid = (indexLeft + indexRight) >> 1;
+    int compare = strcmp(result.lookup, (const char *)index[mid]);
+    if (compare < 0) {
+      indexRight = mid;
+    } else {
+      indexLeft = mid;
+    }
+  }
+
+  const uint8_t *left = index[indexLeft];
+  const uint8_t *right = index[indexRight];
 
   while (left < right) {
 #if JAVELIN_PLATFORM_PICO_SDK || JAVELIN_PLATFORM_NRF5_SDK
@@ -35,30 +57,49 @@ void StenoReverseMapDictionary::AddMapDictionaryData(
     if (compare < 0) {
       right = wordStart;
     } else if (compare > 0) {
-      while (*wordStart != 0xff) {
-        ++wordStart;
+      while (*mid != 0xff) {
+        ++mid;
       }
-      left = wordStart + 1;
+      left = mid + 1;
     } else {
       const uint8_t *p = wordStart;
       while (*p != 0) {
         ++p;
       }
       ++p;
-      while (*p != 0xff) {
-        uint32_t offset = p[0] + (p[1] << 7) + (p[2] << 14) + (p[3] << 21);
-        result.mapDataLookup[result.mapDataLookupCount++] =
-            baseAddress + offset;
-        if (result.mapDataLookupCount >=
-            StenoReverseDictionaryLookup::MAX_MAP_DATA_LOOKUP_COUNT) {
+
+      MapDataLookup mapDataLookup(p);
+      while (mapDataLookup.HasData()) {
+        result.AddMapDataLookup(mapDataLookup.GetData(baseAddress));
+        if (result.IsMapDataLookupFull()) {
           break;
         }
-        p += 4;
+        ++mapDataLookup;
       }
 
       return;
     }
   }
+}
+
+void StenoReverseMapDictionary::BuildIndex() {
+  for (size_t i = 0; i < INDEX_SIZE; ++i) {
+    size_t offset = 1 + i * textBlockLength / INDEX_SIZE;
+    const uint8_t *word = textBlock + offset;
+
+    while (word[-1] != 0xff) {
+      --word;
+    }
+
+    if (indexSize > 0 && index[indexSize - 1] == word) {
+      continue;
+    }
+
+    index[indexSize++] = word;
+  }
+
+  const uint8_t *end = textBlock + textBlockLength;
+  index[indexSize] = end;
 }
 
 const char *StenoReverseMapDictionary::GetName() const {

@@ -91,11 +91,7 @@ void Console::RegisterCommand(const char *command, const char *description,
 
 //---------------------------------------------------------------------------
 
-#ifdef NDEBUG
 void Console::PrintfInternal(const char *format, ...) {
-#else
-void Console::Printf(const char *format, ...) {
-#endif
   va_list args;
   va_start(args, format);
 
@@ -116,9 +112,7 @@ void Console::WriteAsJson(const char *data) {
 }
 
 void Console::WriteScriptEvent(const char *text) {
-  Console::Printf("EV {\"event\":\"script_event\",\"text\":\"");
-  Console::WriteAsJson(text);
-  Console::Printf("\"}\n\n");
+  Console::Printf("EV {\"event\":\"script_event\",\"text\":\"%J\"}\n\n", text);
 }
 
 void Console::Dump(const void *data, size_t length) {

@@ -3,6 +3,7 @@
 #pragma once
 #include "orthography.h"
 #include "processor/processor.h"
+#include "segment_builder.h"
 #include "steno_key_code_buffer.h"
 #include "steno_key_code_emitter.h"
 #include "stroke_history.h"
@@ -18,10 +19,6 @@ class StenoUserDictionary;
 //---------------------------------------------------------------------------
 
 enum StenoEngineMode { NORMAL, ADD_TRANSLATION };
-
-#if !defined(JAVELIN_STENO_SEGMENT_LIMIT)
-#define JAVELIN_STENO_SEGMENT_LIMIT 32
-#endif
 
 //---------------------------------------------------------------------------
 
@@ -46,7 +43,6 @@ public:
   bool EnableDictionary(const char *name);
   bool DisableDictionary(const char *name);
   bool ToggleDictionary(const char *name);
-  void UpdateMaximumStrokeLengthCache();
   void ReverseLookup(StenoReverseDictionaryLookup &result) const;
 
   bool IsPaperTapeEnabled() const { return paperTapeEnabled; }
@@ -82,7 +78,7 @@ public:
 
 private:
   static const StenoStroke UNDO_STROKE;
-  static const size_t SEGMENT_CONVERSION_LIMIT = JAVELIN_STENO_SEGMENT_LIMIT;
+  static const size_t SEGMENT_CONVERSION_PREFIX_SUFFIX_LIMIT = 4;
   static const size_t PAPER_TAPE_SUGGESTION_SEGMENT_LIMIT = 8;
 
   bool paperTapeEnabled = false;
@@ -105,7 +101,7 @@ private:
   StenoStrokeHistory addTranslationHistory;
 
   struct ConversionBuffer {
-    StenoStrokeHistory strokeHistory;
+    StenoSegmentBuilder segmentBuilder;
     StenoKeyCodeBuffer keyCodeBuffer;
 
     void Prepare(const StenoCompiledOrthography *orthography,
@@ -131,6 +127,7 @@ private:
   void AddTranslation(size_t newlineIndex);
   void DeleteTranslation(size_t newlineIndex);
   void ResetState();
+  static void Pump();
 
   void CreateSegments(size_t sourceStrokeCount, ConversionBuffer &buffer,
                       size_t conversionLimit, StenoSegmentList &segmentList);
@@ -148,11 +145,11 @@ private:
   void PrintPaperTapeUndo(size_t undoCount) const;
   void PrintSuggestions(const StenoSegmentList &previousSegmentList,
                         const StenoSegmentList &nextSegmentList);
-  void PrintSuggestion(const char *p, size_t arrowPrefixCount, char *buffer,
+  void PrintSuggestion(const char *p, size_t arrowPrefixCount,
                        size_t strokeThreshold) const;
   char *PrintSegmentSuggestion(size_t wordCount,
                                const StenoSegmentList &segmentList,
-                               char *buffer, char *lastLookup);
+                               char *lastLookup);
   void PrintTextLog(const StenoKeyCodeBuffer &previousKeyCodeBuffer,
                     const StenoKeyCodeBuffer &nextKeyCodeBuffer) const;
 

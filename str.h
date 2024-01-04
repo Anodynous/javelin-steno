@@ -16,8 +16,7 @@ public:
   static char *Join(const char *p, ...);
 
   // Returns an allocated string.
-  static char *Asprintf(const char *p, ...)
-      __attribute__((format(printf, 1, 2)));
+  static char *Asprintf(const char *p, ...);
   static size_t Sprintf(char *target, const char *p, ...);
 
   // Threadsafe version of strndup.
@@ -47,6 +46,11 @@ public:
   // the result;
   static char *WriteJson(char *buffer, const char *text);
 
+  // Needs to be invoked with Str::Length<>(...), otherwise the strlen()
+  // version is used instead.
+  template <size_t N> static size_t Length(const char (&text)[N]) {
+    return N - 1;
+  }
   static size_t Length(const uint8_t *p) { return strlen((const char *)p); }
   static size_t Length(const char *p) { return strlen(p); }
 

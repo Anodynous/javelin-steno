@@ -56,6 +56,10 @@ public:
   static StenoDictionaryLookupResult CreateDynamicString(const char *p) {
     return StenoDictionaryLookupResult((intptr_t(p) << 1) + 1);
   }
+
+  bool operator==(const StenoDictionaryLookupResult &other) const {
+    return text == other.text;
+  }
 };
 #else
 class StenoDictionaryLookupResult {
@@ -105,6 +109,10 @@ public:
     result.destroyMethod = &FreeText;
     return result;
   }
+
+  bool operator==(const StenoDictionaryLookupResult &other) const {
+    return text == other.text;
+  }
 };
 #endif
 
@@ -129,6 +137,9 @@ struct StenoReverseDictionaryResult {
 };
 
 class StenoReverseDictionaryLookup {
+private:
+  static const size_t MAX_MAP_DATA_LOOKUP_COUNT = 24;
+
 public:
   StenoReverseDictionaryLookup(size_t strokeThreshold, const char *lookup)
       : strokeThreshold(strokeThreshold), lookup(lookup),
@@ -150,12 +161,21 @@ public:
   size_t resultCount = 0;
   size_t strokesCount = 0;
 
+  // Used to prevent recursing prefixes too far.
+  size_t prefixLookupDepth = 0;
+
   // These are used as an optimization for map lookup.
   // Since the first step of all map lookups is the same, do it once and
   // pass it down
-  static const size_t MAX_MAP_DATA_LOOKUP_COUNT = 24;
   size_t mapDataLookupCount = 0;
-  const void *mapDataLookup[24];
+  const void *mapDataLookup[MAX_MAP_DATA_LOOKUP_COUNT];
+
+  void AddMapDataLookup(const void *lookup) {
+    mapDataLookup[mapDataLookupCount++] = lookup;
+  }
+  bool IsMapDataLookupFull() const {
+    return mapDataLookupCount >= MAX_MAP_DATA_LOOKUP_COUNT;
+  }
 
   StenoReverseDictionaryResult results[24];
 
@@ -187,15 +207,17 @@ public:
 
   virtual void ReverseLookup(StenoReverseDictionaryLookup &result) const;
 
-  size_t GetCachedMaximumOutlineLength() const {
-    return cachedMaximumOutlineLength;
+  size_t GetMaximumOutlineLength() const { return maximumOutlineLength; }
+  virtual void UpdateMaximumOutlineLength() {
+    if (parent) {
+      parent->UpdateMaximumOutlineLength();
+    }
   }
-  virtual void CacheMaximumOutlineLength() {
-    cachedMaximumOutlineLength = GetMaximumOutlineLength();
-  }
-  static void InvalidateMaximumOutlineLengthCache();
 
-  virtual size_t GetMaximumOutlineLength() const = 0;
+  virtual void SetParentRecursively(StenoDictionary *parent) {
+    this->parent = parent;
+  }
+
   virtual const char *GetName() const = 0;
 
   virtual void PrintInfo(int depth) const;
@@ -209,12 +231,12 @@ public:
   virtual bool ToggleDictionary(const char *name) { return false; }
 
 protected:
-  StenoDictionary() = default;
+  StenoDictionary(size_t maximumOutlineLength)
+      : maximumOutlineLength(maximumOutlineLength), parent(nullptr) {}
 
-  constexpr StenoDictionary(size_t cachedMaximumOutlineLength)
-      : cachedMaximumOutlineLength(cachedMaximumOutlineLength) {}
+  size_t maximumOutlineLength;
+  StenoDictionary *parent;
 
-  size_t cachedMaximumOutlineLength;
   static const char *Spaces(int count) { return SPACES + SPACES_COUNT - count; }
 
 private:

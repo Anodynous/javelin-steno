@@ -12,7 +12,9 @@ constexpr StenoStroke StenoJeffShowStrokeDictionary::trigger(StrokeMask::SL |
                                                              StrokeMask::RL |
                                                              StrokeMask::STAR);
 
-const StenoJeffShowStrokeDictionary StenoJeffShowStrokeDictionary::instance;
+//---------------------------------------------------------------------------
+
+StenoJeffShowStrokeDictionary StenoJeffShowStrokeDictionary::instance;
 
 //---------------------------------------------------------------------------
 
@@ -39,24 +41,11 @@ StenoJeffShowStrokeDictionary::LookupInternal(
     }
   }
 
-  const size_t maximumStrokeText = StrokeBitIndex::COUNT;
-  size_t maximumStringLength =
-      (maximumStrokeText + 1) * (MAXIMUM_OUTLINE_LENGTH - 1) + 2;
-
   bool closed = (strokes[length - 1] == trigger);
-
-  char *base = (char *)malloc(maximumStringLength);
-  char *p = base;
-  *p++ = '`';
-
   size_t end = closed ? length - 1 : length;
-  p = StenoStroke::ToString(p, strokes + 1, end - 1);
-  if (closed) {
-    p[0] = '`';
-    p[1] = '\0';
-  }
+  char *text = Str::Asprintf(closed ? "`%T`" : "`%T", strokes + 1, end - 1);
 
-  return StenoDictionaryLookupResult::CreateDynamicString(base);
+  return StenoDictionaryLookupResult::CreateDynamicString(text);
 }
 
 const StenoDictionary *StenoJeffShowStrokeDictionary::GetLookupProvider(

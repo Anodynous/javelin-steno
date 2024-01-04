@@ -148,10 +148,6 @@ bool StenoEngine::ToggleDictionary(const char *name) {
   return dictionary.ToggleDictionary(name);
 }
 
-void StenoEngine::UpdateMaximumStrokeLengthCache() {
-  dictionary.CacheMaximumOutlineLength();
-}
-
 void StenoEngine::ReverseLookup(StenoReverseDictionaryLookup &result) const {
   ExternalFlashSentry externalFlashSentry;
 
@@ -194,6 +190,8 @@ void StenoEngine::SendText(const uint8_t *p) {
                   nextConversionBuffer.keyCodeBuffer);
 }
 
+__attribute__((weak)) void StenoEngine::Pump() {}
+
 //---------------------------------------------------------------------------
 
 #include "key_code.h"
@@ -215,7 +213,7 @@ extern StenoDictionaryDefinition testDictionaryDefinition;
 
 static StenoCompactMapDictionary mainDictionary(TestDictionary::definition);
 
-const StenoDictionary *const DICTIONARIES[] = {
+StenoDictionary *const DICTIONARIES[] = {
     &StenoEmilySymbolsDictionary::instance,
     &mainDictionary,
 };
@@ -289,8 +287,6 @@ void StenoEngineTester::TestAddTranslation(StenoEngine &engine) {
   engine.ProcessStroke(StenoStroke("R-R"));
   VerifyTextBuffer(engine, "");
 
-  engine.UpdateMaximumStrokeLengthCache();
-
   engine.ProcessStroke(StenoStroke("KAT"));
   VerifyTextBuffer(engine, "test");
   // spellchecker: enable
@@ -322,15 +318,13 @@ void StenoEngineTester::TestScancodeAddTranslation(StenoEngine &engine) {
   engine.ProcessScanCode(KeyCode::ENTER, ScanCodeAction::TAP);
   VerifyTextBuffer(engine, "");
 
-  engine.UpdateMaximumStrokeLengthCache();
-
   engine.ProcessStroke(StenoStroke("KAT"));
   VerifyTextBuffer(engine, "dog");
   // spellchecker: enable
 }
 
 TEST_BEGIN("Engine: Random spam") {
-  static const StenoDictionary *DICTIONARIES[] = {
+  static StenoDictionary *DICTIONARIES[] = {
       &StenoJeffShowStrokeDictionary::instance,
       &StenoJeffPhrasingDictionary::instance,
       &StenoJeffNumbersDictionary::instance,
@@ -364,7 +358,7 @@ TEST_BEGIN("Engine: Add Translation Test") {
   StenoUserDictionaryData layout(buffer, 512 * 1024);
   StenoUserDictionary *userDictionary = new StenoUserDictionary(layout);
 
-  static const StenoDictionary *dictionaries[] = {
+  static StenoDictionary *dictionaries[] = {
       userDictionary,
       &mainDictionary,
   };
@@ -386,7 +380,7 @@ TEST_BEGIN("Engine: Scancode Add Translation Test") {
   StenoUserDictionaryData layout(buffer, 512 * 1024);
   StenoUserDictionary *userDictionary = new StenoUserDictionary(layout);
 
-  static const StenoDictionary *dictionaries[] = {
+  static StenoDictionary *dictionaries[] = {
       userDictionary,
       &mainDictionary,
       &StenoUnicodeDictionary::instance,

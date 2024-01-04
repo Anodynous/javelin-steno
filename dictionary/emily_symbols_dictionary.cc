@@ -31,12 +31,17 @@ const StenoStroke REPEAT_EXTRA_2(StrokeMask::TR);
 const StenoStroke DATA_MASK(StrokeMask::FR | StrokeMask::RR | StrokeMask::PR |
                             StrokeMask::BR | StrokeMask::LR | StrokeMask::GR);
 
+//---------------------------------------------------------------------------
+
+StenoEmilySymbolsDictionary StenoEmilySymbolsDictionary::instance;
+
+//---------------------------------------------------------------------------
+
 struct EmilySymbolData {
+
   StenoStroke trigger;
   const char *text[4];
 };
-
-const StenoEmilySymbolsDictionary StenoEmilySymbolsDictionary::instance;
 
 constexpr EmilySymbolData DATA[] = {
     {
@@ -267,8 +272,6 @@ const char *StenoEmilySymbolsDictionary::GetName() const {
 
 bool StenoEmilySymbolsDictionary::PrintDictionary(const char *name,
                                                   bool hasData) const {
-  char strokeBuffer[StenoStroke::MAX_STRING_LENGTH];
-  char translationBuffer[32];
   for (size_t i = 0; i < sizeof(DATA) / sizeof(*DATA); ++i) {
     StenoStroke stroke = ACTIVATION_MATCH | DATA[i].trigger;
 
@@ -281,11 +284,6 @@ bool StenoEmilySymbolsDictionary::PrintDictionary(const char *name,
         localStroke |= VARIANT_2;
       }
 
-      localStroke.ToString(strokeBuffer);
-
-      char *p = Str::WriteJson(translationBuffer, DATA[i].text[j]);
-      *p++ = '\0';
-
       if (!hasData) {
         hasData = true;
         Console::Printf("\n\t");
@@ -293,7 +291,7 @@ bool StenoEmilySymbolsDictionary::PrintDictionary(const char *name,
         Console::Printf(",\n\t");
       }
 
-      Console::Printf("\"%s\": \"%s\"", strokeBuffer, translationBuffer);
+      Console::Printf("\"%t\": \"%J\"", &localStroke, DATA[i].text[j]);
     }
   }
   return true;
