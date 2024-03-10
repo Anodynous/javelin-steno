@@ -5,6 +5,7 @@
 #include "engine.h"
 #include "key.h"
 #include "segment.h"
+#include "state.h"
 #include "str.h"
 #include "thread.h"
 #include "utf8_pointer.h"
@@ -135,7 +136,15 @@ void StenoEngine::ProcessNormalModeStroke(StenoStroke stroke) {
     if (previousConversionBuffer.keyCodeBuffer.count ==
         nextConversionBuffer.keyCodeBuffer.count) {
       history.SetBackHasManualStateChange();
-      printSuggestions = false;
+      if (state.caseMode != StenoCaseMode::NORMAL ||
+          state.overrideCaseMode != StenoCaseMode::NORMAL) {
+        printSuggestions = false;
+      } else if (history.GetCount() >= 2) {
+        StenoState previousState = history.Back(2).state;
+        if (previousState.isManualStateChange) {
+          printSuggestions = false;
+        }
+      }
     }
   }
 
@@ -185,6 +194,7 @@ void StenoEngine::ProcessNormalModeUndo() {
 
   state = history.Back(undoCount).state;
   state.shouldCombineUndo = false;
+  state.isManualStateChange = false;
   history.RemoveBack(undoCount);
 
   size_t nextConversionCount =
@@ -358,14 +368,14 @@ void StenoEngine::PrintSuggestions(const StenoSegmentList &previousSegmentList,
     return;
   }
 
-  if (state.isManualStateChange || state.joinNext) {
-    return;
-  }
-
   char buffer[256];
 
   // Finger spelling suggestions.
   if (Str::IsFingerSpellingCommand(nextSegmentList.Back().lookup.GetText())) {
+    if (state.isManualStateChange || state.joinNext) {
+      return;
+    }
+
     // Get the last word out of the buffer and look that up.
     char *p = buffer + sizeof(buffer) - 1;
     *p = '\0';
@@ -461,11 +471,17 @@ char *StenoEngine::PrintSegmentSuggestion(size_t wordCount,
         return nullptr;
       }
 
-      // Consider it a word start if it isn't a suffix stroke.
+      // Consider it a word start if it isn't a suffix stroke and it isn't
+      // a fingerspelling joined to a previous fingerspelling.
       // This will still give suggestions after prefixes, e.g.
       //   overwatching: AUFR/WAFP/-G will suggest to combine WAFPG
-      if (!Str::IsJoinPrevious(
-              segmentList[startSegmentIndex].lookup.GetText())) {
+      const char *startSegmentText =
+          segmentList[startSegmentIndex].lookup.GetText();
+      if (!Str::IsJoinPrevious(startSegmentText) &&
+          (startSegmentIndex == 0 ||
+           !Str::IsFingerSpellingCommand(startSegmentText) ||
+           !Str::IsFingerSpellingCommand(
+               segmentList[startSegmentIndex - 1].lookup.GetText()))) {
         break;
       }
     }
@@ -495,7 +511,7 @@ char *StenoEngine::PrintSegmentSuggestion(size_t wordCount,
   }
 
   char *lookup =
-      testSegments[0].state->isManualStateChange ||
+      testSegments.HasManualStateChange() ||
               Str::HasPrefix(testSegments.Back().lookup.GetText(), "{:")
           ? previousConversionBuffer.keyCodeBuffer.ToString()
           : previousConversionBuffer.keyCodeBuffer.ToUnresolvedString();
@@ -509,11 +525,35 @@ char *StenoEngine::PrintSegmentSuggestion(size_t wordCount,
     return lookup;
   }
 
-  testSegments.Reset();
-
   bool printSuggestion = *spaceRemoved != '\0' &&
                          (startSegmentIndex != segmentList.GetCount() - 1 ||
                           strokeThresholdCount != 1);
+
+  if (state.joinNext) {
+    bool usePrefixSyntax = true;
+    if (segmentList.GetCount() >= 2) {
+      // If the previous state is the same, and the new state ends in a space,
+      // truncate the space and treat it as a non-space lookup.
+      if (*segmentList.Back().state == state) {
+        size_t length = Str::Length(spaceRemoved);
+        if (length != 0 && spaceRemoved[length - 1] == ' ') {
+          spaceRemoved = Str::DupN(spaceRemoved, length - 1);
+          free(lookup);
+          lookup = spaceRemoved;
+          usePrefixSyntax = false;
+        }
+      }
+    }
+
+    if (usePrefixSyntax) {
+      char *prefixLookup = Str::Asprintf("{%s^}", spaceRemoved);
+      free(lookup);
+      lookup = prefixLookup;
+      spaceRemoved = prefixLookup;
+    }
+  }
+
+  testSegments.Reset();
 
   if (!printSuggestion && lastLookup) {
     char *lastLookupSpaceRemoved =

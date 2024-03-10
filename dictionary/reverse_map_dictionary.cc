@@ -1,3 +1,4 @@
+
 //---------------------------------------------------------------------------
 
 #include "reverse_map_dictionary.h"
@@ -20,6 +21,7 @@ void StenoReverseMapDictionary::ReverseLookup(
     AddMapDictionaryData(result);
   }
   dictionary->ReverseLookup(result);
+  FilterResult(result);
 }
 
 void StenoReverseMapDictionary::AddMapDictionaryData(
@@ -53,33 +55,57 @@ void StenoReverseMapDictionary::AddMapDictionaryData(
       --wordStart;
     }
 
-    int compare = strcmp(result.lookup, (const char *)wordStart);
+    // Inline strcmp because the end of the match is useful.
+    const uint8_t *p = wordStart;
+    const uint8_t *l = (const uint8_t *)result.lookup;
+    int compare;
+    int cp;
+    for (;;) {
+      int cl = *l++;
+      cp = *p++;
+
+      compare = cl - cp;
+      if (compare != 0 || cp == 0) {
+        break;
+      }
+    }
+
     if (compare < 0) {
       right = wordStart;
-    } else if (compare > 0) {
-      while (*mid != 0xff) {
-        ++mid;
-      }
-      left = mid + 1;
-    } else {
-      const uint8_t *p = wordStart;
-      while (*p != 0) {
-        ++p;
-      }
-      ++p;
+      continue;
+    }
 
-      MapDataLookup mapDataLookup(p);
-      while (mapDataLookup.HasData()) {
-        result.AddMapDataLookup(mapDataLookup.GetData(baseAddress));
-        if (result.IsMapDataLookupFull()) {
-          break;
-        }
-        ++mapDataLookup;
-      }
+    while (cp != 0) {
+      cp = *p++;
+    }
 
-      return;
+    if (compare > 0) {
+      MapDataLookup lookup(p);
+      while (lookup.HasData()) {
+        ++lookup;
+      }
+      left = lookup.GetPointer() + 1;
+      continue;
+    }
+
+    result.AddMapDataLookup(p, baseAddress);
+    return;
+  }
+}
+
+// This ensures that the results are not conflicting with higher priority
+// dictionaries.
+void StenoReverseMapDictionary::FilterResult(
+    StenoReverseDictionaryLookup &result) const {
+  size_t newCount = 0;
+  for (size_t i = 0; i < result.resultCount; ++i) {
+    const StenoReverseDictionaryResult &r = result.results[i];
+    if (dictionary->GetDictionaryForOutline(r.strokes, r.length) ==
+        r.lookupProvider) {
+      result.results[newCount++] = r;
     }
   }
+  result.resultCount = newCount;
 }
 
 void StenoReverseMapDictionary::BuildIndex() {

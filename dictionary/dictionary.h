@@ -1,6 +1,7 @@
 //---------------------------------------------------------------------------
 
 #pragma once
+#include "../malloc_allocate.h"
 #include "../str.h"
 #include "../stroke.h"
 #include <stddef.h>
@@ -8,6 +9,7 @@
 
 //---------------------------------------------------------------------------
 
+class MapDataLookup;
 class StenoDictionary;
 
 //---------------------------------------------------------------------------
@@ -136,7 +138,7 @@ struct StenoReverseDictionaryResult {
   const StenoDictionary *lookupProvider;
 };
 
-class StenoReverseDictionaryLookup {
+class StenoReverseDictionaryLookup : public JavelinMallocAllocate {
 private:
   static const size_t MAX_MAP_DATA_LOOKUP_COUNT = 24;
 
@@ -176,6 +178,8 @@ public:
   bool IsMapDataLookupFull() const {
     return mapDataLookupCount >= MAX_MAP_DATA_LOOKUP_COUNT;
   }
+  void AddMapDataLookup(MapDataLookup mapDataLookup,
+                        const uint8_t *baseAddress);
 
   StenoReverseDictionaryResult results[24];
 
@@ -198,11 +202,14 @@ public:
   }
 
   virtual const StenoDictionary *
-  GetLookupProvider(const StenoDictionaryLookup &lookup) const;
+  GetDictionaryForOutline(const StenoDictionaryLookup &lookup) const;
 
-  inline const StenoDictionary *GetLookupProvider(const StenoStroke *strokes,
-                                                  size_t length) const {
-    return GetLookupProvider(StenoDictionaryLookup(strokes, length));
+  inline const StenoDictionary *
+  GetDictionaryForOutline(const StenoStroke *strokes, size_t length) const {
+    return GetDictionaryForOutline(StenoDictionaryLookup(strokes, length));
+  }
+  inline bool HasOutline(const StenoStroke *strokes, size_t length) const {
+    return GetDictionaryForOutline(strokes, length) != nullptr;
   }
 
   virtual void ReverseLookup(StenoReverseDictionaryLookup &result) const;

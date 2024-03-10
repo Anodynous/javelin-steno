@@ -199,7 +199,8 @@ void StenoReversePrefixDictionary::ReverseLookup(
     StenoReverseDictionaryLookup &result) const {
   dictionary->ReverseLookup(result);
   if (result.strokeThreshold > 2 &&
-      result.prefixLookupDepth < MAXIMUM_REVERSE_PREFIX_DEPTH) {
+      result.prefixLookupDepth < MAXIMUM_REVERSE_PREFIX_DEPTH &&
+      !Str::Contains(result.lookup, ' ')) {
     ReverseLookupContext context;
     context.left = prefixes;
     context.right = prefixes + prefixCount;
@@ -260,23 +261,16 @@ void StenoReversePrefixDictionary::AddPrefixReverseLookup(
               (const char *)test.prefix);
 
       // Add map lookup hints.
-      // Given format '{prefix^}\0', skip 4 extra bytes to get to prefix strokes
-      MapDataLookup mapDataLookup = test.prefix->mapDataLookup;
-      while (mapDataLookup.HasData()) {
-        prefixLookup->AddMapDataLookup(mapDataLookup.GetData(baseAddress));
-        if (prefixLookup->IsMapDataLookupFull()) {
-          break;
-        }
-        ++mapDataLookup;
-      }
+      prefixLookup->AddMapDataLookup(test.prefix->mapDataLookup, baseAddress);
 
       dictionary->ReverseLookup(*prefixLookup);
 
       if (prefixLookup->HasResults()) {
         for (size_t p = 0; p < prefixLookup->resultCount; p++) {
-          StenoReverseDictionaryResult &prefix = prefixLookup->results[p];
+          const StenoReverseDictionaryResult &prefix = prefixLookup->results[p];
           for (size_t s = 0; s < suffixLookup->resultCount; ++s) {
-            StenoReverseDictionaryResult &suffix = suffixLookup->results[s];
+            const StenoReverseDictionaryResult &suffix =
+                suffixLookup->results[s];
             size_t combinedLength = prefix.length + suffix.length;
             if (combinedLength >= result.strokeThreshold) {
               continue;
@@ -309,7 +303,7 @@ bool StenoReversePrefixDictionary::IsStrokeDefined(
     const StenoStroke *strokes, size_t prefixStrokeCount,
     size_t combinedStrokeCount) const {
   for (size_t i = prefixStrokeCount + 1; i <= combinedStrokeCount; ++i) {
-    if (dictionary->GetLookupProvider(strokes, i)) {
+    if (dictionary->HasOutline(strokes, i)) {
       return true;
     }
   }

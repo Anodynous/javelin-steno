@@ -138,8 +138,7 @@ StenoUserDictionary::Lookup(const StenoDictionaryLookup &lookup) const {
                                              offset - OFFSET_DATA);
 
       if (entry->strokeLength == lookup.length &&
-          memcmp(lookup.strokes, entry->strokes,
-                 sizeof(StenoStroke) * lookup.length) == 0) {
+          StenoStroke::Equals(lookup.strokes, entry->strokes, lookup.length)) {
         return StenoDictionaryLookupResult::CreateStaticString(
             entry->GetText());
       }
@@ -149,7 +148,7 @@ StenoUserDictionary::Lookup(const StenoDictionaryLookup &lookup) const {
   }
 }
 
-const StenoDictionary *StenoUserDictionary::GetLookupProvider(
+const StenoDictionary *StenoUserDictionary::GetDictionaryForOutline(
     const StenoDictionaryLookup &lookup) const {
   size_t entryIndex = lookup.hash;
   for (;;) {
@@ -169,8 +168,7 @@ const StenoDictionary *StenoUserDictionary::GetLookupProvider(
                                              offset - OFFSET_DATA);
 
       if (entry->strokeLength == lookup.length &&
-          memcmp(lookup.strokes, entry->strokes,
-                 sizeof(StenoStroke) * lookup.length) == 0) {
+          StenoStroke::Equals(lookup.strokes, entry->strokes, lookup.length)) {
         return this;
       }
     }
@@ -445,7 +443,7 @@ bool StenoUserDictionary::AddToHashTable(const StenoStroke *strokes,
                                              offset - OFFSET_DATA);
 
       if (entry->strokeLength == length &&
-          memcmp(strokes, entry->strokes, sizeof(StenoStroke) * length) == 0) {
+          StenoStroke::Equals(strokes, entry->strokes, length)) {
         WriteEntryIndex(entryIndex, dataOffset + OFFSET_DATA);
         return true;
       }
@@ -513,7 +511,7 @@ StenoUserDictionary::RemoveFromHashTable(const StenoStroke *strokes,
                                              offset - OFFSET_DATA);
 
       if (entry->strokeLength == length &&
-          memcmp(strokes, entry->strokes, sizeof(StenoStroke) * length) == 0) {
+          StenoStroke::Equals(strokes, entry->strokes, length)) {
         WriteEntryIndex(entryIndex, OFFSET_DELETED);
         return entry;
       }

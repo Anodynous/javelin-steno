@@ -1,6 +1,7 @@
 //---------------------------------------------------------------------------
 
 #include "dictionary.h"
+#include "map_data_lookup.h"
 
 #include "../console.h"
 #include <stddef.h>
@@ -122,7 +123,7 @@ bool StenoReverseDictionaryLookup::HasResult(const StenoStroke *c,
   for (size_t i = 0; i < resultCount; ++i) {
     const StenoReverseDictionaryResult &result = results[i];
     if (result.length == length &&
-        memcmp(result.strokes, c, length * sizeof(StenoStroke)) == 0) {
+        StenoStroke::Equals(result.strokes, c, length)) {
       return true;
     }
   }
@@ -130,10 +131,21 @@ bool StenoReverseDictionaryLookup::HasResult(const StenoStroke *c,
   return false;
 }
 
+void StenoReverseDictionaryLookup::AddMapDataLookup(
+    MapDataLookup mapDataLookup, const uint8_t *baseAddress) {
+  while (mapDataLookup.HasData()) {
+    AddMapDataLookup(mapDataLookup.GetData(baseAddress));
+    if (IsMapDataLookupFull()) {
+      return;
+    }
+    ++mapDataLookup;
+  }
+}
+
 //---------------------------------------------------------------------------
 
-const StenoDictionary *
-StenoDictionary::GetLookupProvider(const StenoDictionaryLookup &lookup) const {
+const StenoDictionary *StenoDictionary::GetDictionaryForOutline(
+    const StenoDictionaryLookup &lookup) const {
   StenoDictionaryLookupResult lookupResult = Lookup(lookup);
   bool result = lookupResult.IsValid();
   lookupResult.Destroy();
